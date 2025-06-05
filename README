@@ -1,0 +1,93 @@
+# Dual UART Controller with APB Interface
+# Author:Praveen Saravanan
+
+Design implementation of a dual-channel UART controller designed for embedded systems with APB bus interface.
+
+Overview:
+
+This project implements a dual-channel UART controller that can be integrated into ARM-based SoCs or microcontrollers. The design features independent UART channels with configurable FIFO depths and a standard APB (Advanced Peripheral Bus) interface for CPU communication.
+
+
+Architecture
+
+┌─────────────────────────────────────────────────────┐
+│                   TOP MODULE                        │
+│  ┌───────────────┐           ┌───────────────────┐  │
+│  │   APB Bus     │           │   Address Decode  │  │
+│  │  Interface    │ ────────► │   & Routing       │  │
+│  └───────────────┘           └───────────────────┘  │
+│           │                           │              │
+│           ▼                           ▼              │
+│  ┌─────────────────┐         ┌─────────────────────┐ │
+│  │   UART0 Module  │         │   UART1 Module      │ │
+│  │ ┌─────┐ ┌─────┐ │         │ ┌─────┐ ┌─────────┐ │ │
+│  │ │TX   │ │RX   │ │         │ │TX   │ │RX       │ │ │
+│  │ │FIFO │ │FIFO │ │         │ │FIFO │ │FIFO     │ │ │
+│  │ │(16) │ │(16) │ │         │ │(32) │ │(32)     │ │ │
+│  │ └─────┘ └─────┘ │         │ └─────┘ └─────────┘ │ │
+│  └─────────────────┘         └─────────────────────┘ │
+│           │                           │              │
+│           ▼                           ▼              │
+│       uart0_txd                   uart1_txd          │
+│       uart0_rxd                   uart1_rxd          │
+└─────────────────────────────────────────────────────┘
+
+Structure
+
+
+dual_uart.sv                 # Complete design (all modules)
+├── tx_fifo                  # Transmit FIFO module
+├── rx_fifo                  # Receive FIFO module  
+├── uart_0                   # UART Channel 0 (16-byte FIFOs)
+├── uart_1                   # UART Channel 1 (32-byte FIFOs)
+├── top                      # Top-level controller with APB interface
+└── tb_dual_uart             # Comprehensive testbench
+
+
+ Memory Map
+
+| Address Range | Channel | Register | Description |
+|---------------|---------|----------|-------------|
+| 0x000-0x00F   | UART0   | Channel 0 registers | 16-byte FIFOs |
+| 0x010-0x01F   | UART1   | Channel 1 registers | 32-byte FIFOs |
+
+Register Map (per channel)
+
+| Offset | Register | Access | Description |
+|--------|----------|--------|-------------|
+| +0x00  | CTRL     | R/W    | Control register (future) |
+| +0x04  | STATUS   | R      | Status register (future) |
+| +0x08  | DATA     | R/W    | FIFO data access |
+| +0x0C  | BAUD     | R/W    | Baud rate config (future) |
+
+
+Address Examples
+
+- **UART0 DATA:** `0x008` - Write to TX FIFO, Read from RX FIFO
+- **UART1 DATA:** `0x018` - Write to TX FIFO, Read from RX FIFO
+
+ Interface Signals
+
+APB Bus Interface
+
+input  logic [11:0] paddr,     // Address bus
+input  logic        psel,      // Peripheral select
+input  logic        penable,   // Enable signal
+input  logic        pwrite,    // Write enable
+input  logic [31:0] pwdata,    // Write data
+output logic [31:0] prdata,    // Read data
+output logic        pready     // Transfer ready
+
+
+External UART Signals
+
+
+output logic uart0_txd,        // Channel 0 transmit
+input  logic uart0_rxd,        // Channel 0 receive
+output logic uart1_txd,        // Channel 1 transmit  
+input  logic uart1_rxd         // Channel 1 receive
+
+
+
+
+
